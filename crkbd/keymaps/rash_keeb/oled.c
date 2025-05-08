@@ -10,6 +10,7 @@ void render_space(void) {
 #    define MIN_WALK_SPEED      10
 #    define MIN_RUN_SPEED       40
 
+
 /* advanced settings */
 #    define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
 #    define ANIM_SIZE           96   // number of bytes in array. If you change sprites, minimize for adequate firmware size. max is 1024
@@ -25,6 +26,7 @@ uint8_t current_frame = 0;
 /* status variables */
 int   current_wpm = 0;
 led_t led_usb_state;
+extern bool is_caps_word_on(void);
 
 bool isSneaking = false;
 bool isBarking = false;
@@ -223,23 +225,27 @@ void render_mod_status_ctrl_shift(uint8_t modifiers) {
     static const char PROGMEM on_on_1[] = {0xcb, 0};
     static const char PROGMEM on_on_2[] = {0xcc, 0};
 
+    // Check for caps lock or caps word
+    bool caps_on = host_keyboard_led_state().caps_lock || is_caps_word_on();
+    uint8_t effective_mods = caps_on ? (modifiers | MOD_MASK_SHIFT) : modifiers;
+
     if(modifiers & MOD_MASK_CTRL) {
         oled_write_P(ctrl_on_1, false);
     } else {
         oled_write_P(ctrl_off_1, false);
     }
 
-    if ((modifiers & MOD_MASK_CTRL) && (modifiers & MOD_MASK_SHIFT)) {
+    if ((modifiers & MOD_MASK_CTRL) && (effective_mods & MOD_MASK_SHIFT)) {
         oled_write_P(on_on_1, false);
     } else if(modifiers & MOD_MASK_CTRL) {
         oled_write_P(on_off_1, false);
-    } else if(modifiers & MOD_MASK_SHIFT) {
+    } else if(effective_mods & MOD_MASK_SHIFT) {
         oled_write_P(off_on_1, false);
     } else {
         oled_write_P(off_off_1, false);
     }
 
-    if(modifiers & MOD_MASK_SHIFT) {
+    if(effective_mods & MOD_MASK_SHIFT) {
         oled_write_P(shift_on_1, false);
     } else {
         oled_write_P(shift_off_1, false);
@@ -251,17 +257,17 @@ void render_mod_status_ctrl_shift(uint8_t modifiers) {
         oled_write_P(ctrl_off_2, false);
     }
 
-    if (modifiers & MOD_MASK_CTRL & MOD_MASK_SHIFT) {
+    if ((modifiers & MOD_MASK_CTRL) && (effective_mods & MOD_MASK_SHIFT)) {
         oled_write_P(on_on_2, false);
     } else if(modifiers & MOD_MASK_CTRL) {
         oled_write_P(on_off_2, false);
-    } else if(modifiers & MOD_MASK_SHIFT) {
+    } else if(effective_mods & MOD_MASK_SHIFT) {
         oled_write_P(off_on_2, false);
     } else {
         oled_write_P(off_off_2, false);
     }
 
-    if(modifiers & MOD_MASK_SHIFT) {
+    if(effective_mods & MOD_MASK_SHIFT) {
         oled_write_P(shift_on_2, false);
     } else {
         oled_write_P(shift_off_2, false);
@@ -320,7 +326,12 @@ bool oled_task_user(void) {
 
     if (is_keyboard_master()) {
         current_wpm   = get_current_wpm();
-        //led_usb_state = host_keyboard_led_state();
+        led_usb_state = host_keyboard_led_state();
+
+        // Check for Caps Lock or Caps Word
+        bool caps_on = led_usb_state.caps_lock || is_caps_word_on();
+        isBarking = caps_on;
+
         oled_set_cursor(0, 1);
         render_luna(0, 1);
         oled_set_cursor(0, 5);

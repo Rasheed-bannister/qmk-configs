@@ -16,16 +16,13 @@
 /* Set 0 if debouncing isn't needed */
 #define DEBOUNCE 5
 
-/* Mechanical locking support. Use KC_LCAP, KC_LNUM or KC_LSCR instead in keymap */
-//#define LOCKING_SUPPORT_ENABLE
-/* Locking resynchronize hack */
-//#define LOCKING_RESYNC_ENABLE
+#define DOUBLE_TAP_SHIFT_TURNS_ON_CAPS_WORD
+
 
 /*
  * Feature disable options
  *  These options are also useful to firmware size reduction.
  */
-//#define MASTER_RIGHT
 #define SPLIT_HAND_PIN GP21
 #define	SPLIT_HAND_PIN_LOW_IS_LEFT
 #define USE_SERIAL
